@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[10]:
-
 
 import fitz  # PyMuPDF
 import re
@@ -49,10 +44,8 @@ resultados = extrair_texto_e_imagens(pdf_path)
 exibir_resultados(resultados)
 
 
-# In[4]:
 
 
-import re
 
 def aplicar_mascara_alternativas(resultados):
     # Encontrar todas as alternativas duplicadas e substituir por uma única letra
@@ -71,7 +64,7 @@ resultados_formatados = aplicar_mascara_alternativas(resultados)
 exibir_resultados(resultados_formatados)
 
 
-# In[6]:
+
 
 
 from IPython.display import display, Markdown
@@ -88,16 +81,6 @@ resultados = extrair_texto_e_imagens(pdf_path)
 
 # Exibindo apenas o texto das questões que contêm imagens
 exibir_questoes_com_imagens(resultados)
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
 
 
 

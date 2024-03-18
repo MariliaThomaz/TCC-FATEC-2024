@@ -1,21 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
-
+import requests
 import fitz  # PyMuPDF
 import re
-import requests
-from IPython.display import Markdown
-def extrair_texto_e_imagens(pdf_url):
-    # Baixar o PDF temporariamente desativando a verificação SSL
-    response = requests.get(pdf_url, verify=False)
-    with open("temp_pdf.pdf", "wb") as pdf_file:
-        pdf_file.write(response.content)
+from IPython.display import display, Markdown
 
-    pdf_document = fitz.open("temp_pdf.pdf")
+def extrair_texto_e_imagens(pdf_path):
+    pdf_document = fitz.open(pdf_path)
     informacoes_pdf = []
 
     for pagina_num in range(pdf_document.page_count):
@@ -26,13 +18,16 @@ def extrair_texto_e_imagens(pdf_url):
 
         # Verificar se a página contém imagens
         imagens = pagina.get_images(full=True)
-        contem_imagens = any(isinstance(imagem[2], (str, bytes)) and re.search(rb'XObject:\s+Image', imagem[2]) for imagem in imagens)
+        
+        # Identificar questões com imagens
+        questoes_com_imagens = identificar_questoes_com_imagens(texto_pagina, imagens)
 
         # Armazenar informações sobre a página
         informacoes_pagina = {
             'numero_pagina': pagina_num + 1,
             'texto': texto_pagina,
-            'contem_imagens': contem_imagens
+            'contem_imagens': len(questoes_com_imagens) > 0,
+            'questoes_com_imagens': questoes_com_imagens
         }
 
         # Adicionar informações à lista
@@ -42,9 +37,36 @@ def extrair_texto_e_imagens(pdf_url):
 
     return informacoes_pdf
 
-# Substitua o URL do PDF pelo caminho local ou URL do seu PDF
-pdf_url = "https://download.inep.gov.br/enem/provas_e_gabaritos/2023_PV_impresso_D2_CD5.pdf"
-resultados = extrair_texto_e_imagens(pdf_url)
+def identificar_questoes_com_imagens(texto, imagens):
+    # Encontrar padrões que representam o início de cada questão
+    padrao_questao = re.compile(r'(\d{1,2}\. [^\d]+)')
+
+    # Encontrar todas as questões com imagens
+    questoes_com_imagens = []
+    for match in padrao_questao.finditer(texto):
+        inicio_questao = match.group(1)
+        
+        # Verificar se há imagens associadas à questão
+        imagens_na_questao = any(imagem[0] >= match.start() and imagem[0] <= match.end() for imagem in imagens)
+        
+        if imagens_na_questao:
+            questoes_com_imagens.append(inicio_questao)
+
+    return questoes_com_imagens
+
+def exibir_questoes_com_imagens(resultados):
+    for resultado in resultados:
+        for questao_com_imagem in resultado['questoes_com_imagens']:
+            display(Markdown(f"**Página {resultado['numero_pagina']}, Questão {questao_com_imagem}**\n{resultado['texto']}"))
+            display(Markdown(f"<font color='red'>Contém imagens: {resultado['contem_imagens']}</font>\n"))
+
+# Substitua o caminho do PDF pelo caminho local do seu PDF
+pdf_path = r'C:\Users\Marilia\Desktop\Fatec\TCC\2023_PV_impresso_D2_CD5.pdf'
+resultados = extrair_texto_e_imagens(pdf_path)
+
+# Exibindo as questões com imagens
+exibir_questoes_com_imagens(resultados)
+
 
 # Exibindo os resultados
 for resultado in resultados:
@@ -53,13 +75,7 @@ for resultado in resultados:
    # print(f"Texto:\n{resultado['texto']}\n")
 
 
-# In[4]:
 
-
-import fitz  # PyMuPDF
-import re
-import requests
-from IPython.display import display, Markdown
 
 def extrair_texto_e_imagens(pdf_url):
     # Baixar o PDF temporariamente desativando a verificação SSL
@@ -103,13 +119,7 @@ for resultado in resultados:
     display(Markdown(f"<font color='red'>Contém imagens: {resultado['contem_imagens']}</font>"))
 
 
-# In[ ]:
 
-
-import fitz  # PyMuPDF
-import re
-import requests
-from IPython.display import display, Markdown
 
 def extrair_texto_e_imagens(pdf_url):
     # Baixar o PDF temporariamente desativando a verificação SSL
@@ -155,8 +165,6 @@ for resultado in resultados:
     display(Markdown(f"<font color='red'>Contém imagens: {resultado['contem_imagens']}</font>"))
 
 
-# In[2]:
-
 
 import fitz  # PyMuPDF
 import re
@@ -200,12 +208,6 @@ for resultado in resultados:
     display(Markdown(f"<font color='red'>Contém imagens: {resultado['contem_imagens']}</font>"))
 
 
-# ## Masca  para  faz  tratameto nas  autenativa  letras  repetidas
-
-# In[3]:
-
-
-import re
 texto = texto_questoes
 def aplicar_mascara_alternativas(texto):
     # Encontrar todas as alternativas duplicadas e substituir por uma única letra
@@ -223,13 +225,6 @@ texto_formatado = aplicar_mascara_alternativas(texto_entrada)
 print("\nTexto formatado:")
 print(texto_formatado)
 
-
-# In[4]:
-
-
-import fitz  # PyMuPDF
-import re
-from IPython.display import display, Markdown
 
 def extrair_texto_e_imagens(pdf_path):
     pdf_document = fitz.open(pdf_path)
@@ -339,12 +334,6 @@ for resultado in resultados:
     print(f"Questões Identificadas: {resultado['questoes']}\n")
 
 
-# In[6]:
-
-
-import fitz  # PyMuPDF
-import re
-from IPython.display import display, Markdown
 
 def extrair_texto_e_imagens(pdf_path):
     pdf_document = fitz.open(pdf_path)
@@ -406,13 +395,6 @@ for resultado in resultados:
     print(f"Questões com Imagens: {resultado['questoes_com_imagens']}\n")
 
 
-# In[7]:
-
-
-import fitz  # PyMuPDF
-import re
-from IPython.display import display, Markdown
-
 def extrair_texto_e_imagens(pdf_path):
     pdf_document = fitz.open(pdf_path)
     informacoes_pdf = []
@@ -475,13 +457,6 @@ resultados = extrair_texto_e_imagens(pdf_path)
 exibir_questoes_com_imagens(resultados)
 
 
-# In[8]:
-
-
-import fitz  # PyMuPDF
-import re
-from IPython.display import display, Markdown
-
 def extrair_texto_e_imagens(pdf_path):
     pdf_document = fitz.open(pdf_path)
     informacoes_pdf = []
@@ -540,13 +515,6 @@ resultados = extrair_texto_e_imagens(pdf_path)
 # Exibindo as questões com imagens
 exibir_questoes_com_imagens(resultados)
 
-
-# In[9]:
-
-
-import fitz  # PyMuPDF
-import re
-from IPython.display import display, Markdown
 
 def extrair_texto_e_imagens(pdf_path):
     pdf_document = fitz.open(pdf_path)
@@ -611,12 +579,7 @@ resultados = extrair_texto_e_imagens(pdf_path)
 exibir_questoes_com_imagens(resultados)
 
 
-# In[10]:
 
-
-import fitz  # PyMuPDF
-import re
-from IPython.display import display, Markdown
 
 def extrair_texto_e_imagens(pdf_path):
     pdf_document = fitz.open(pdf_path)
@@ -678,27 +641,6 @@ resultados = extrair_texto_e_imagens(pdf_path)
 
 # Exibindo as questões com imagens
 exibir_questoes_com_imagens(resultados)
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
 
 
 
